@@ -18,7 +18,7 @@ MODELS_DIR = '../pretrained-models/'
 
 DATASET_POSE = 'human_pose.json'
 MODEL_RESNET18 = 'resnet18_baseline_att_224x224_A_epoch_249.pth'
-MODEL_RESNET18_OPTIMZED = 'resnet18_baseline_att_224x224_A_epoch_249_trt.pth'
+MODEL_RESNET18_OPTIMIZED = 'resnet18_baseline_att_224x224_A_epoch_249_trt.pth'
 
 WIDTH = 224
 HEIGHT = 224
@@ -29,7 +29,7 @@ parser.add_argument('--video_filename', type=str)
 args = parser.parse_args()
 
 # load json containing human pose tasks
-with open(DATASETS_PATH + DATASET_POSE, 'r') as f:
+with open(DATASETS_DIR + DATASET_POSE, 'r') as f:
     human_pose = json.load(f)
 
 topology = trt_pose.coco.coco_category_to_topology(human_pose)
@@ -45,7 +45,7 @@ model.load_state_dict(torch.load(MODELS_DIR + MODEL_RESNET18))
 
 # optimize the model
 data = torch.zeros((1, 3, HEIGHT, WIDTH)).cuda()
-if not os.path.exists(MODEL_RESNET18_OPTIMIZED):
+if not path.exists(MODEL_RESNET18_OPTIMIZED):
     model.load_state_dict(torch.load(MODELS_DIR + MODEL_RESNET18))
     model_trt = torch2trt.torch2trt(model, [data], fp16_mode=True, max_workspace_size=1<<25)
     torch.save(model_trt.state_dict(), MODEL_RESNET18_OPTIMIZED)
@@ -82,27 +82,31 @@ def execute(image, time):
     draw_objects(image, counts, objects, peaks)
     return fps
 
-# iterate frames of a video
-def iter_frames(video_filepath):
-    capture = cv2.VideoCapture(video_filepath)
+def video_capture_init():
+    video_capture = cv2.VideoCapture(args.video_path + args.video_filename)
     fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
     out_video = cv2.VideoWriter(\
             args.video_path + 'output.mp4',\
-            fourcc, capture.get(cv2.CAP_PROP_FPS),\
-            (int(capture.get(3)),int(capture.get(4))))
+            fourcc,\
+            video_capture.get(cv2.CAP_PROP_FPS),\
+            (int(video_capture.get(3)),int(video_capture.get(4))))
+    return video_capture, out_video
 
-    while (capture.isOpened()):
-        ret, frame = capture.read()
+def video_capture_destroy():
+    cv2.destroyAllWindows()
+    out_video.release()
+    video_capture.release()
+
+# iterate frames of a video
+def iter_frames(video_capture):
+    while (video_capture.isOpened()):
+        ret, frame = video_capture.read()
         if not ret:
             print("Video load Error.")
             break
         if cv2.waitKey(25) & 0xFF == ord('q'):
             break
         yield frame
-        
-    cv2.destroyAllWindows()
-    out_video.release()
-    capture.release()
 
 if __name__ == '__main__':
     '''
@@ -113,8 +117,13 @@ if __name__ == '__main__':
     - Draw the objects onto the frame
     and write the frames back into a new video.
     '''
-    for frame in iter_frames(args.video_path + args.video_filename):
+    
+    video_capture, out_video = video_capture_init()
+
+    for frame in iter_frames(video_capture):
         image = cv2.resize(frame, dsize=(WIDTH, HEIGHT), interpolation=cv2.INTER_AREA)
         fps = execute(image, time.time())
         cv2.putText(frame, "FPS: %f" % (fps), (20, 30),  cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 3)
         out_video.write(frame)
+
+    video_capture_destroy()
