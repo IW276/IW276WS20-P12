@@ -50,7 +50,7 @@ if not path.exists(MODEL_RESNET18_OPTIMIZED):
     model_trt = torch2trt.torch2trt(model, [data], fp16_mode=True, max_workspace_size=1<<25)
     torch.save(model_trt.state_dict(), MODEL_RESNET18_OPTIMIZED)
 
-model_trt = TRTModule()
+model_trt = torch2trt.TRTModule()
 model_trt.load_state_dict(torch.load(MODEL_RESNET18_OPTIMIZED))
 
 # parse objects from the NN
@@ -73,7 +73,7 @@ def preprocess(image):
     return image[None, ...]
 
 # execute the NN
-def execute(image, time):
+def execute(image, frame, t):
     data = preprocess(image)
     cmap, paf = model_trt(data)
     cmap, paf = cmap.detach().cpu(), paf.detach().cpu()
@@ -81,8 +81,8 @@ def execute(image, time):
 
     #TODO draw activity detection frame on the image with DDNet
 
-    fps = 1.0 / (time.time() - time)
-    draw_objects(image, counts, objects, peaks)
+    fps = 1.0 / (time.time() - t)
+    draw_objects(frame, counts, objects, peaks)
     return fps
 
 def video_capture_init():
@@ -125,7 +125,8 @@ if __name__ == '__main__':
 
     for frame in iter_frames(video_capture):
         image = cv2.resize(frame, dsize=(WIDTH, HEIGHT), interpolation=cv2.INTER_AREA)
-        fps = execute(image, time.time())
+        fps = execute(image, frame, time.time())
+        print("FPS: %f" % fps)
         cv2.putText(frame, "FPS: %f" % (fps), (20, 30),  cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 3)
         out_video.write(frame)
 
