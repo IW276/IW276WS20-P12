@@ -45,13 +45,13 @@ model.load_state_dict(torch.load(MODELS_DIR + MODEL_RESNET18))
 
 # optimize the model
 data = torch.zeros((1, 3, HEIGHT, WIDTH)).cuda()
-if not path.exists(MODEL_RESNET18_OPTIMIZED):
+if not path.exists(MODELS_DIR + MODEL_RESNET18_OPTIMIZED):
     model.load_state_dict(torch.load(MODELS_DIR + MODEL_RESNET18))
     model_trt = torch2trt.torch2trt(model, [data], fp16_mode=True, max_workspace_size=1<<25)
-    torch.save(model_trt.state_dict(), MODEL_RESNET18_OPTIMIZED)
+    torch.save(model_trt.state_dict(), MODELS_DIR + MODEL_RESNET18_OPTIMIZED)
 
 model_trt = torch2trt.TRTModule()
-model_trt.load_state_dict(torch.load(MODEL_RESNET18_OPTIMIZED))
+model_trt.load_state_dict(torch.load(MODELS_DIR + MODEL_RESNET18_OPTIMIZED))
 
 # parse objects from the NN
 parse_objects = ParseObjects(topology)
