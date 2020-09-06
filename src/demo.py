@@ -78,6 +78,9 @@ def execute(image, time):
     cmap, paf = model_trt(data)
     cmap, paf = cmap.detach().cpu(), paf.detach().cpu()
     counts, objects, peaks = parse_objects(cmap, paf)
+
+    #TODO draw activity detection frame on the image with DDNet
+
     fps = 1.0 / (time.time() - time)
     draw_objects(image, counts, objects, peaks)
     return fps
