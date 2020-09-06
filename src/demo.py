@@ -105,7 +105,6 @@ def iter_frames(video_capture):
     while (video_capture.isOpened()):
         ret, frame = video_capture.read()
         if not ret:
-            print("Video load Error.")
             break
         if cv2.waitKey(25) & 0xFF == ord('q'):
             break
@@ -120,14 +119,21 @@ if __name__ == '__main__':
     - Draw the objects onto the frame
     and write the frames back into a new video.
     '''
-    
+
+    print("Initializing video capture") 
+
     video_capture, out_video = video_capture_init()
+
+    print("Processing frames ...")
+    print("Hint: This may take a while depending on the size of the video.") 
 
     for frame in iter_frames(video_capture):
         image = cv2.resize(frame, dsize=(WIDTH, HEIGHT), interpolation=cv2.INTER_AREA)
         fps = execute(image, frame, time.time())
-        print("FPS: %f" % fps)
         cv2.putText(frame, "FPS: %f" % (fps), (20, 30),  cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 3)
         out_video.write(frame)
 
     video_capture_destroy()
+
+    print("Done") 
+    print("Resulting video can be found in %s" % args.video_path + "output.mp4")
