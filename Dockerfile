@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y libopencv-python && apt-get install -y 
           build-essential \
           zlib1g-dev \
           zip \
+          python3-matplotlib \
           libjpeg8-dev && rm -rf /var/lib/apt/lists/*
 RUN pip3 install -U \
         pip \
@@ -18,5 +19,6 @@ RUN pip3 install -U \
         -r requirements.txt \
          && \
     rm -rf ~/.cache/pip
-
-# ....
+RUN git clone https://github.com/NVIDIA-AI-IOT/trt_pose
+RUN cd trt_pose
+RUN python3 setup.py install
