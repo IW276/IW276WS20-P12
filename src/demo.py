@@ -136,4 +136,3 @@ if __name__ == '__main__':
     video_capture_destroy()
 
     print("Done") 
-    print("Resulting video can be found in %s" % args.video_path + "output.mp4")
