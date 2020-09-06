@@ -8,3 +8,5 @@
 CONTAINER="trtpose-activity-demo:1"
 
 docker run --runtime nvidia -v $1:/videos $CONTAINER /bin/bash -c "cd IW276WS20-P12/src && python3 demo.py --video_path /videos/ --video_filename $2"
+
+echo "Resulting video can be found in $1"
