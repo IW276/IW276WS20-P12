@@ -7,7 +7,7 @@ COPY jetson-ota-public.asc /etc/apt/trusted.gpg.d/jetson-ota-public.asc
 RUN apt-get update && apt-get install -y libopencv-python && apt-get install -y --no-install-recommends \
           python3-pip \
           python3-dev \
-	  python3-tk \
+          python3-tk \
           python3-matplotlib \
           build-essential \
           zlib1g-dev \
