@@ -4,6 +4,16 @@ import re
 from pytube import YouTube
 from tqdm import tqdm
 from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
+import argparse
+
+
+parser = argparse.ArgumentParser(description='Download videos from Youtube')
+parser.add_argument('datasets', help='a path to the dataset folder')
+parser.add_argument('-o', "--output-folder",  help='a path to the dataset folder')
+
+
+datasets = None
+video_folder = None
 
 
 def importcsv(path):
@@ -21,18 +31,17 @@ def download(imp_csv):
     count_failed = 0
     failed_videos = []
     for entry in tqdm(imp_csv):
+        print(entry)
         if "https://www.youtube.com/watch?v=" + entry[dict['id']] in failed_videos:
             count_failed += 1
             continue
-        path = 'videos\{0}\{1}\{2}'.format(entry[dict['Category']], entry[dict['Activity']], entry[dict['id']])
-        if os.path.exists(os.path.join(os.path.dirname(__file__), path)):
+        path = os.path.join(video_folder, entry[dict['Category']], entry[dict['Activity']], entry[dict['id']])
+        if os.path.exists(os.path.join(video_folder, path)):
             continue
-        # if entry[dict['id']] in downloaded_files and os.path.exists(os.path.join(os.path.dirname(__file__), path)):
-        #     continue
-        os.makedirs(os.path.dirname(path), exist_ok=True)
+        os.makedirs(os.path.join(video_folder, path), exist_ok=True)
         try:
             YouTube("https://www.youtube.com/watch?v=" + entry[dict['id']]).streams.first().download(
-                os.path.join(os.path.dirname(__file__), path))
+                os.path.join(video_folder, path))
         except:
             if not "https://www.youtube.com/watch?v=" + entry[dict['id']] in failed_videos:
                 failed_videos.append("https://www.youtube.com/watch?v=" + entry[dict['id']])
@@ -47,7 +56,7 @@ def download(imp_csv):
 
 
 def save(csv_list):
-    with open('MPII_youtube_offline.csv', 'w', newline='') as file:
+    with open(os.path.join(datasets,'MPII_youtube_offline.csv'), 'w', newline='') as file:
         file_writer = csv.writer(file, delimiter=';')
         for entry in csv_list:
             file_writer.writerow(entry)
@@ -68,22 +77,22 @@ def cut_videos(imp_csv, sec):
     orig_videos = []
     dict = {'Activity': 0, 'Category': 1, 'frame_sec': 2, 'id': 3}
     for entry in tqdm(imp_csv):
-        path = 'videos\{0}\{1}\{2}'.format(entry[dict['Category']], entry[dict['Activity']], entry[dict['id']])
+        path = os.path.join(video_folder, entry[dict['Category']], entry[dict['Activity']], entry[dict['id']])
         count = 0
         try:
-            for file in os.listdir(os.path.abspath(path)):
+            for file in os.listdir(os.path.join(video_folder,path)):
                 x = re.search("clip", file)
                 if not x:
-                    if not os.path.join(os.path.abspath(path), file) in orig_videos:
-                        orig_videos.append(os.path.join(os.path.abspath(path), file))
+                    if not os.path.join(os.path.join(video_folder,path), file) in orig_videos:
+                        orig_videos.append(os.path.join(os.path.join(video_folder,path), file))
         except:
             print("Could not find file at {0}".format(path))
 
     # start cutting
     print('Start cutting videos to be of length {0} seconds'.format(sec))
     for entry in tqdm(imp_csv):
-        path = 'videos\{0}\{1}\{2}'.format(entry[dict['Category']], entry[dict['Activity']], entry[dict['id']])
-        original = lookup_file(orig_videos, os.path.abspath(path))
+        path = os.path.join(video_folder, entry[dict['Category']], entry[dict['Activity']], entry[dict['id']])
+        original = lookup_file(orig_videos, os.path.join(video_folder,path))
 
         if original == 0:
             print("Could not find file at {0}".format(path))
@@ -101,11 +110,29 @@ def cut_videos(imp_csv, sec):
 
 
 def main():
+
+
+    args = parser.parse_args()
+    global datasets
+    if args.datasets:
+        if re.match("\/\S+", args.datasets):
+            datasets = args.datasets
+        else:
+            datasets = os.path.join(os.getcwd(), args.datasets)
+
+    global video_folder
+    if args.output_folder:
+        if re.match("\/\S+", args.output_folder):
+            video_folder = args.output_folder
+        else:
+            video_folder = os.path.join(os.getcwd(), args.output_folder)
+    else:
+        video_folder = os.path.join(os.getcwd(), "videos")
     # Sometimes Youtube downloads don't work out very well if connections is terminated or something like that.
     # Use repeat_yt_download to repeat the whole thing
     repeat_yt_download = 1
     print('Importing csv.')
-    imp_csv = importcsv("MPII_youtube.csv")
+    imp_csv = importcsv(os.path.join(datasets, "MPII_youtube.csv"))
     print('Downloading Youtube videos.')
     if repeat_yt_download != 0:
         original_csv = imp_csv
