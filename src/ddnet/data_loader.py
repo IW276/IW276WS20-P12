@@ -7,7 +7,7 @@ import numpy as np
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 
-DATASETS_DIR = '../datasets/'
+DATASETS_DIR = '../../datasets/'
 TRAINING_DATA_DIR = os.path.join(DATASETS_DIR, "training-data")
 
 RGB_MEAN = np.array([0.485, 0.456, 0.406])  # ImageNet RGB
@@ -23,9 +23,9 @@ class DDNetDataset(Dataset):
         self.n_input_frames = n_input_frames
         self._skeletons = list()  # List of n_input_frames x P x 2
         self._labels = list()
-        self._indices = range(15)  # BODY_25 w/0 face & feet
+        self._indices = range(12)  # BODY_25 w/0 face & feet
         # parse training data
-        self.prepare_dataset(annotations_json)
+        self.prepare_dataset(annotations_file)
         self._jcd, self._pose, self._y = DDNetDataset.data_generator(self._skeletons, self._labels)
         # Data dimensions
         self.n_joints, self.d_joints = self._pose.shape[2:]
@@ -120,7 +120,8 @@ class DDNetDataset(Dataset):
                 skeletons = [x - x[8, :] for x in skeletons]
                 skeletons = [x / max_height for x in skeletons]
                 self._labels.append(annotation['category_id'])
-                self._skeletons.append(np.stack(skeletons)[:, self._indices, :])
+                stack = np.stack(skeletons)
+                self._skeletons.append(stack[:, self._indices, :])
                 return
             pose = np.asarray(annotation['keypoints']['pose']).reshape(-1, 3)[:, 0:2]  # P x 2
             bbox = DDNetDataset.get_bbox(pose)
@@ -133,9 +134,9 @@ class DDNetDataset(Dataset):
 if __name__ == '__main__':
     PHASE = 'train'
     for train_file in os.listdir(TRAINING_DATA_DIR):
-        with open(train_file) as train_json:
+        with open(os.path.join(TRAINING_DATA_DIR, train_file)) as train_json:
             train_data = json.loads(train_json.read())
-            dataset = DDNetDataset(train_data, PHASE)
+            dataset = DDNetDataset(train_data, PHASE, 1)
             data_loader = DataLoader(dataset, batch_size=1, shuffle=True, num_workers=0)
             for i_batch, sample_batched in enumerate(data_loader):
                 [print(x.shape) for x in sample_batched]
