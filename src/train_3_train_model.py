@@ -13,12 +13,13 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 
-from data.dataloader import DDNetDataset
+from data_loader import DDNetDataset
 from models.ddnet import DDNet, DDNetConfig
 
 from tqdm import tqdm
 
 DATASETS_DIR = '../../datasets/'
+MODELS_DIR = "../../models/"
 TRAINING_DATA_DIR = os.path.join(DATASETS_DIR, "training-data")
 
 CLASS_NAMES = {
@@ -32,7 +33,7 @@ CLASS_NAMES = {
 LOG_PER_N_ITER = 100
 
 parser = argparse.ArgumentParser()
-parser.add_argument('model_dir', type=str)
+parser.add_argument('--model_dir', type=str, default=MODELS_DIR)
 parser.add_argument('--train_dir', type=str, default=TRAINING_DATA_DIR)
 parser.add_argument('--batch_size', type=int, default=64)
 parser.add_argument('--n_input_frames', type=int, default=6, help='number of frames for attention window')
