@@ -35,21 +35,22 @@ def generate_annotations(video_clip):
     clip_path = os.path.join(clip_dir, clip_name)
     print("processing clip {}".format(clip_path))
     video_capture = cv2.VideoCapture(clip_path)
+    annotation_id = 0
     for frame_id, frame in iter_frames(video_capture):
         image, keypoints = model.estimate_pose(frame)
-        if len(keypoints) == 0:
-            continue
         video_clip_annotations["images"].append({
             "id": frame_id,
             "width": image.shape[0],
             "height": image.shape[1]
         })
-        video_clip_annotations["annotations"].append({
-            "id": frame_id,
-            "image_id": frame_id,
-            "category_id": activity,
-            "keypoints": keypoints
-        })
+        for k in keypoints:
+            annotation_id += 1
+            video_clip_annotations["annotations"].append({
+                "id": annotation_id,
+                "image_id": frame_id,
+                "category_id": activity,
+                "keypoints": k
+            })
     annotations_path = os.path.join(clip_dir, clip_name + ".json")
     with open(annotations_path, 'w') as video_clip_json:
         json.dump(video_clip_annotations, video_clip_json, sort_keys=True, indent=2)
