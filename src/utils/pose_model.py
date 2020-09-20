@@ -84,7 +84,7 @@ class PoseModel():
             for j in range(pose.shape[0]):
                 coords = tuple(np.round(pose[j]).astype(int))
                 cv2.circle(image, coords, 3, (0, 255, 0), 2)
-            det = {'pose': pose, 'score': 1.0}
+            det = {'pose': pose.tolist(), 'score': 1.0}
             frame_dets.append(det)
         return frame_dets
 
