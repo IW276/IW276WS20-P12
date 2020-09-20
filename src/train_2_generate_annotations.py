@@ -61,8 +61,8 @@ Processes each video clip and generates a json
 in COCO format containing annotations for training.
 """
 parser = argparse.ArgumentParser(description=DESCRIPTION)
-parser.add_argument('--video_dir', type=str)
-parser.add_argument('--csv_path', type=str)
+parser.add_argument('video_dir', type=str)
+parser.add_argument('csv_path', type=str)
 args = parser.parse_args()
 
 if __name__ == '__main__':
