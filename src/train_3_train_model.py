@@ -1,4 +1,5 @@
 import argparse
+import json
 import copy
 import logging
 import os
@@ -6,7 +7,6 @@ import time
 import numpy as np
 
 from datetime import datetime
-
 
 import torch
 import torch.nn as nn
@@ -18,27 +18,30 @@ from models.ddnet import DDNet, DDNetConfig
 
 from tqdm import tqdm
 
+DATASETS_DIR = '../../datasets/'
+TRAINING_DATA_DIR = os.path.join(DATASETS_DIR, "training-data")
 
-CLASS_NAMES = {'other': 0, 'punch': 1, 'kick': 2, 'wave': 3, 'check_watch': 4, 'cross_arms': 5, 'film': 6, 'get_up': 7,
-               'hand_shake': 8, 'hit': 9, 'hug': 10, 'pick_up': 11, 'point': 12, 'push': 13, 'scratch_head': 14,
-               'sit_down': 15, 'throw_over_head': 16, 'turn_around': 17, 'walk': 18}
-
+CLASS_NAMES = {
+        "walking, general" : 1,
+        "walking the dog" : 2,
+        "running" : 3,
+        "jogging" : 4,
+        "bicycling, general" : 5
+}
 
 LOG_PER_N_ITER = 100
-TRAINING_IDENTIFIER = ''
 
+parser = argparse.ArgumentParser()
+parser.add_argument('model_dir', type=str)
+parser.add_argument('--train_dir', type=str, default=TRAINING_DATA_DIR)
+parser.add_argument('--batch_size', type=int, default=64)
+parser.add_argument('--n_input_frames', type=int, default=6, help='number of frames for attention window')
+parser.add_argument('--n_epochs', type=int, default=50)
+parser.add_argument('--extra_log_dir', type=str)
+parser.add_argument('--gpu', type=int, default=0)
+cfg = parser.parse_args()
 
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--model_dir', type=str)
-    parser.add_argument('--train_csv', type=str, default=os.path.join('./', 'train.csv'))
-    parser.add_argument('--test_csv', type=str, default=os.path.join('./', 'test.csv'))
-    parser.add_argument('--batch_size', type=int, default=64)
-    parser.add_argument('--n_input_frames', type=int, default=6, help='number of frames for attention window')
-    parser.add_argument('--n_epochs', type=int, default=50)
-    parser.add_argument('--extra_log_dir', type=str)
-    parser.add_argument('--gpu', type=int, default=0)
-    return parser.parse_args()
+TRAINING_IDENTIFIER = f'{cfg.arch}_b{cfg.batch_size}_gpu{cfg.gpu}_epochs{cfg.n_epochs}_inp{cfg.n_input_frames}'
 
 
 def train(model, gpu, model_dir, data_loaders, criterion, optimizer, num_epochs=25, lr_scheduler=None, extra_log_dir=None):
@@ -164,32 +167,22 @@ def train(model, gpu, model_dir, data_loaders, criterion, optimizer, num_epochs=
     return model, val_acc_history
 
 
-def main(cfg):
-    print(cfg)
-    global TRAINING_IDENTIFIER
-    TRAINING_IDENTIFIER = f'{cfg.arch}_b{cfg.batch_size}_gpu{cfg.gpu}_epochs{cfg.n_epochs}_inp{cfg.n_input_frames}'
-    # Data loader
-    train_set = DDNetDataset(cfg.train_csv, 'train', cfg.n_input_frames)
-    test_set = DDNetDataset(cfg.test_csv, 'test', cfg.n_input_frames)
-    data_loaders = dict()
-    data_loaders['train'] = DataLoader(train_set, cfg.batch_size, shuffle=True, num_workers=0)
-    data_loaders['val'] = DataLoader(test_set, cfg.batch_size, shuffle=False, num_workers=0)
-    # Model
-
-    ddnet_cfg = DDNetConfig(len(CLASS_NAMES), cfg.n_input_frames, train_set.n_joints, train_set.d_joints)
-
-    model = DDNet(ddnet_cfg)
-    model.to(f'cuda:{cfg.gpu}')
-    # Loss
-    criterion = nn.CrossEntropyLoss()
-    # Optimizer
-    optimizer = optim.Adam(model.parameters())
-    # LR scheduler
-    lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=10)
-    # Train
-    train(model, cfg.gpu, cfg.model_dir, data_loaders, criterion, optimizer, cfg.n_epochs, lr_scheduler, cfg.extra_log_dir)
-
-
 if __name__ == '__main__':
-    main(parse_args())
-    
+    for train_file in os.listdir(TRAINING_DATA_DIR):
+        with open(os.path.join(cfg.train_dir, train_file)) as train_json:
+            train_data = json.loads(train_json.read())
+        train_set = DDNetDataset(train_data, 'train', cfg.n_input_frames)
+        data_loaders = dict()
+        data_loaders['train'] = DataLoader(train_set, cfg.batch_size, shuffle=True, num_workers=0)
+        # Model
+        ddnet_cfg = DDNetConfig(len(CLASS_NAMES), cfg.n_input_frames, train_set.n_joints, train_set.d_joints)
+        model = DDNet(ddnet_cfg)
+        model.to(f'cuda:{cfg.gpu}')
+        # Loss
+        criterion = nn.CrossEntropyLoss()
+        # Optimizer
+        optimizer = optim.Adam(model.parameters())
+        # LR scheduler
+        lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=10)
+        # Train
+        train(model, cfg.gpu, cfg.model_dir, data_loaders, criterion, optimizer, cfg.n_epochs, lr_scheduler, cfg.extra_log_dir)
