@@ -33,7 +33,7 @@ def generate_annotations(video_clip):
     clip_dir = os.path.join(args.video_dir, category, activity, directory)
     clip_name = "clip_{0}_{1}.mp4".format(frame_start, frame_end)
     clip_path = os.path.join(clip_dir, clip_name)
-    print(clip_path)
+    print("processing clip {}".format(clip_path))
     video_capture = cv2.VideoCapture(clip_path)
     for frame_id, frame in iter_frames(video_capture):
         image, keypoints = model.estimate_pose(frame)
@@ -48,7 +48,6 @@ def generate_annotations(video_clip):
             "id": frame_id,
             "image_id": frame_id,
             "category_id": activity,
-#            "keypoints": keypoints
             "keypoints": {
                 "pose" : keypoints[0]["pose"].tolist(),
                 "score" : keypoints[0]["score"]
