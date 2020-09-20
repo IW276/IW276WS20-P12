@@ -187,4 +187,5 @@ if __name__ == '__main__':
         # LR scheduler
         lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=10)
         # Train
+        model.eval()
         train(model, cfg.gpu, cfg.model_dir, data_loaders, criterion, optimizer, cfg.n_epochs, lr_scheduler, cfg.extra_log_dir)
