@@ -12,7 +12,7 @@ from tqdm import tqdm
 from pytube import YouTube
 from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
 
-DATASETS_DIR = '../../datasets/'
+DATASETS_DIR = '../datasets/'
 
 CSV_HEADER = {'Activity': 0, 'Category': 1, 'StartOfFrame': 2, 'Directory': 3}
 
@@ -38,7 +38,6 @@ def download(csv_data):
         category = entry[CSV_HEADER['Category']]
         activity = entry[CSV_HEADER['Activity']]
         directory = entry[CSV_HEADER['Directory']]
-        print(entry)
         if "https://www.youtube.com/watch?v=" + category in failed_videos:
             count_failed += 1
             continue
