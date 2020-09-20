@@ -48,10 +48,7 @@ def generate_annotations(video_clip):
             "id": frame_id,
             "image_id": frame_id,
             "category_id": activity,
-            "keypoints": {
-                "pose" : keypoints[0]["pose"].tolist(),
-                "score" : keypoints[0]["score"]
-            }
+            "keypoints": keypoints
         })
     annotations_path = os.path.join(clip_dir, clip_name + ".json")
     with open(annotations_path, 'w') as video_clip_json:
