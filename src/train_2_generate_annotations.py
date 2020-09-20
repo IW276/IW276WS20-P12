@@ -32,12 +32,12 @@ clip_annotations_template = {
             {
                 "supercategory": "running",
                 "id": 3,
-                "name": "jogging"
+                "name": "running"
             },
             {
                 "supercategory": "running",
                 "id": 4,
-                "name": "running"
+                "name": "jogging"
             },
             {
                 "supercategory": "bicycling",
@@ -48,6 +48,8 @@ clip_annotations_template = {
         "images": [],
         "annotations": []
     }
+
+category_ids = { c['name']:c['id'] for c in clip_annotations_template["categories"] }
 
 def generate_annotations(video_clip):
     '''
@@ -82,7 +84,7 @@ def generate_annotations(video_clip):
             video_clip_annotations["annotations"].append({
                 "id": annotation_id,
                 "image_id": frame_id,
-                "category_id": activity,
+                "category_id": category_ids[activity],
                 "keypoints": k
             })
     annotations_path = os.path.join(TRAINING_DATA_DIR, "{}_clip_{}_{}.json".format(video_hash, frame_start, frame_end))
