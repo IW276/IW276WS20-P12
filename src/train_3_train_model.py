@@ -13,13 +13,13 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 
-from data_loader import DDNetDataset
-from models.ddnet import DDNet, DDNetConfig
+from ddnet.data_loader import DDNetDataset
+from ddnet.ddnet import DDNet, DDNetConfig
 
 from tqdm import tqdm
 
-DATASETS_DIR = '../../datasets/'
-MODELS_DIR = "../../models/"
+DATASETS_DIR = '../datasets/'
+MODELS_DIR = "../pretrained-models/"
 TRAINING_DATA_DIR = os.path.join(DATASETS_DIR, "training-data")
 
 CLASS_NAMES = {
@@ -42,7 +42,7 @@ parser.add_argument('--extra_log_dir', type=str)
 parser.add_argument('--gpu', type=int, default=0)
 cfg = parser.parse_args()
 
-TRAINING_IDENTIFIER = f'{cfg.arch}_b{cfg.batch_size}_gpu{cfg.gpu}_epochs{cfg.n_epochs}_inp{cfg.n_input_frames}'
+TRAINING_IDENTIFIER = f'b{cfg.batch_size}_gpu{cfg.gpu}_epochs{cfg.n_epochs}_inp{cfg.n_input_frames}'
 
 
 def train(model, gpu, model_dir, data_loaders, criterion, optimizer, num_epochs=25, lr_scheduler=None, extra_log_dir=None):
@@ -51,7 +51,8 @@ def train(model, gpu, model_dir, data_loaders, criterion, optimizer, num_epochs=
     """
     tmp_name = time.strftime("%Y%m%d_%H%M%S", time.gmtime())
     logging_fn = f'{tmp_name}_{TRAINING_IDENTIFIER}.log'
-    model_dir = f'{model_dir}/{tmp_name}_{TRAINING_IDENTIFIER}'
+    #model_dir = f'{model_dir}/{tmp_name}_{TRAINING_IDENTIFIER}'
+    model_dir = os.path.join(cfg.model_dir, "{}_{}".format(tmp_name, TRAINING_IDENTIFIER))
     if not os.path.isdir(model_dir):
         os.mkdir(model_dir)
     # Log to both file & console: https://stackoverflow.com/a/46098711
