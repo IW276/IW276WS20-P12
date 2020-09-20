@@ -72,14 +72,14 @@ def generate_annotations(video_clip):
     annotation_id = 0
     for frame_id, frame in iter_frames(video_capture):
         image, keypoints = model.estimate_pose(frame)
+        if args.skip_dirty and len(keypoints) > 1:
+            return
         video_clip_annotations["images"].append({
             "id": frame_id,
             "width": image.shape[0],
             "height": image.shape[1]
         })
         for k in keypoints:
-            if args.skip_dirty and annotation_id == frame_id:
-                return
             annotation_id += 1
             video_clip_annotations["annotations"].append({
                 "id": annotation_id,
