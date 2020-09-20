@@ -32,6 +32,7 @@ class DDNet(nn.Module):
     def __init__(self, config):
         super(DDNet, self).__init__()
         self.config = config
+        self.name = "ddnet"
 
         self.jcd_branch = nn.Sequential(
             c1d(config.feat_d, config.filters * 2, 1),
