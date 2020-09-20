@@ -76,6 +76,6 @@ if __name__ == '__main__':
     # open csv containing video clip locations and category information
     with open(args.csv_path) as csv_file:
         video_clip_data = csv.reader(csv_file, delimiter=';')
-
+        # generate annotations for each video clip
         for clip in video_clip_data:
             generate_annotations(clip)
