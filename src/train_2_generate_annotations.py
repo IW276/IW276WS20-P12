@@ -9,8 +9,8 @@ import csv
 import argparse
 import cv2
 
-from frame_iterator import iter_frames
-from pose_model import PoseModel
+from utils.frame_iterator import iter_frames
+from utils.pose_model import PoseModel
 
 model = PoseModel()
 
