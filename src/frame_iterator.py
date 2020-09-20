@@ -16,5 +16,5 @@ def iter_frames(video_capture):
             break
         if cv2.waitKey(25) & 0xFF == ord('q'):
             break
-        frame_id =+ 1
+        frame_id += 1
         yield frame_id, frame
