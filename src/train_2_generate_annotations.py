@@ -57,7 +57,9 @@ def generate_annotations(video_clip):
     by returning a json in COCO format containing annotations
     for each frame.
     '''
-    video_clip_annotations = clip_annotations_template
+    video_clip_annotations = dict(clip_annotations_template)
+    video_clip_annotations["annotations"] = []
+    video_clip_annotations["images"] = []
     csv_header = {'Activity': 0, 'Category': 1, 'StartOfFrame': 2, 'VideoHash': 3}
     category = video_clip[csv_header['Category']]
     activity = video_clip[csv_header['Activity']]
@@ -79,14 +81,20 @@ def generate_annotations(video_clip):
             "width": image.shape[0],
             "height": image.shape[1]
         })
-        for k in keypoints:
-            annotation_id += 1
-            video_clip_annotations["annotations"].append({
-                "id": annotation_id,
-                "image_id": frame_id,
-                "category_id": category_ids[activity],
-                "keypoints": k
-            })
+#        print(type(keypoints), keypoints)
+#        for k in keypoints:
+#            annotation_id += 1
+#            video_clip_annotations["annotations"].append({
+#                "id": annotation_id,
+#                "image_id": frame_id,
+#                "category_id": category_ids[activity],
+#                "keypoints": k
+#            })
+        video_clip_annotations["annotations"].append({
+            "image_id": frame_id,
+            "category_id": category_ids[activity],
+            "keypoints": keypoints
+        })
     annotations_path = os.path.join(TRAINING_DATA_DIR, "{}_clip_{}_{}.json".format(video_hash, frame_start, frame_end))
     with open(annotations_path, 'w') as video_clip_json:
         json.dump(video_clip_annotations, video_clip_json, sort_keys=True, indent=2)
