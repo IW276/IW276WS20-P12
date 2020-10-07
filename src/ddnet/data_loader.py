@@ -2,13 +2,16 @@ import csv
 import json
 import os
 import re
+
 import cv2
 import numpy as np
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 
+
 DATASETS_DIR = '../../datasets/'
 TRAINING_DATA_DIR = os.path.join(DATASETS_DIR, "training-data")
+
 
 RGB_MEAN = np.array([0.485, 0.456, 0.406])  # ImageNet RGB
 RGB_STDDEV = np.array([0.229, 0.224, 0.225])  # ImageNet RGB
@@ -17,15 +20,22 @@ PAF_STDDEV = np.array([0.5])
 
 random_index = np.random.randint
 
+
 class DDNetDataset(Dataset):
-    def __init__(self, annotations_file, phase, n_input_frames=6):
+
+    def __init__(self, training_data_dir, phase, n_input_frames=6):
+        """
+        Initializer
+        :param csv_file: csv file containing image list
+        """
+        self._training_data_dir = training_data_dir
         self._phase = phase
         self.n_input_frames = n_input_frames
         self._skeletons = list()  # List of n_input_frames x P x 2
         self._labels = list()
         self._indices = range(12)  # BODY_25 w/0 face & feet
-        # parse training data
-        self.prepare_dataset(annotations_file)
+        # Load csv
+        self.prepare_dataset()
         self._jcd, self._pose, self._y = DDNetDataset.data_generator(self._skeletons, self._labels)
         # Data dimensions
         self.n_joints, self.d_joints = self._pose.shape[2:]
@@ -94,50 +104,83 @@ class DDNetDataset(Dataset):
         return diff_slow, diff_fast
 
     @staticmethod
-    def get_bbox(pose):
-        pose = np.copy(pose)
-        pose[pose == 0.0] = np.nan
-        x_min, y_min = np.nanmin(pose, axis=0)
-        x_max, y_max = np.nanmax(pose, axis=0)
-        width, height = x_max - x_min, y_max - y_min
-        center_x, center_y = x_min + width / 2, y_min + height / 2
-        width *= 1.3
-        height *= 1.3
-        x_min, y_min = round(center_x - width / 2), round(center_y - height / 2)
-        x_max, y_max = round(center_x + width / 2), round(center_y + height / 2)
-        width, height = x_max - x_min, y_max - y_min
-        return (x_min, y_min, width, height)
+    def get_poses(annotations):
+        poses = list()
+        for pose in annotations["keypoints"]:
+            for p in pose["pose"]:
+                if p[0] > 0.0 and p[1] > 0.0:
+                    kp = np.asarray(pose["pose"]).reshape(-1, 3)[:, 0:2]  # P x 2
+                    poses.append(kp)
+                    break
+        return poses
 
-    def prepare_dataset(self, train_data):
-        skeletons = []
-        max_height = 0
-        images = train_data['images']
-        annotations = train_data['annotations']
-        annotated_frames = [(i, a) for i in images for a in annotations if a['image_id'] == i['id']]
-        for (image, annotation) in annotated_frames:
-            if len(skeletons) > self.n_input_frames:
-                # Normalize to the center of the body (hip) & largest height in sequence
-                skeletons = [x - x[8, :] for x in skeletons]
-                skeletons = [x / max_height for x in skeletons]
-                self._labels.append(annotation['category_id'])
-                stack = np.stack(skeletons)
-                self._skeletons.append(stack[:, self._indices, :])
-                return
-            pose = np.asarray(annotation['keypoints']['pose']).reshape(-1, 3)[:, 0:2]  # P x 2
-            bbox = DDNetDataset.get_bbox(pose)
-            if bbox:
-                skeletons.append(pose)
-                height = bbox[3]
-                if height > max_height:
-                    max_height = height
+    @staticmethod
+    def get_bboxes(poses):
+        bbs = list()
+        for keypoints in poses:
+            keypoints = np.copy(keypoints)
+            keypoints[keypoints == 0.0] = np.nan
+            x_min, y_min = np.nanmin(keypoints, axis=0)
+            x_max, y_max = np.nanmax(keypoints, axis=0)
+            width, height = x_max - x_min, y_max - y_min
+            # Expand 30% in all sides
+            center_x, center_y = x_min + width / 2, y_min + height / 2
+            width *= 1.3
+            height *= 1.3
+            x_min, y_min = round(center_x - width / 2), round(center_y - height / 2)
+            x_max, y_max = round(center_x + width / 2), round(center_y + height / 2)
+            width, height = x_max - x_min, y_max - y_min
+            bbs.append((x_min, y_min, width, height))
+        return bbs
+
+    def prepare_dataset(self):
+        data = dict()
+        for train_file in os.listdir(self._training_data_dir):
+            with open(os.path.join(self._training_data_dir, train_file)) as train_json:
+                print(train_file)
+                train_data = json.loads(train_json.read())
+                activity = train_data["annotations"][0]["category_id"]
+
+                sequence = sorted([(i, j) for i in train_data["images"] for j in train_data["annotations"] if j["image_id"] == i["id"]], key=lambda k: k[0]["id"])
+                k = self.n_input_frames
+                if len(sequence) > k:
+                    for i in range(len(sequence) - k + 1):
+                        sub_sequence = sequence[i:i + k]
+                        skeletons = list()
+                        max_height = 0
+                        for img_fn, json_fn in sub_sequence:
+                            poses = DDNetDataset.get_poses(json_fn)
+                            bbs = DDNetDataset.get_bboxes(poses)
+                            if bbs:
+                                if len(bbs) == 1:
+                                    skeletons.append(poses[0])
+                                    height = bbs[0][3]
+                                else:  # Remove duplicate bounding boxes (skeletons)
+                                    # Check which cropped image size == bounding box size
+                                    width = img_fn["width"]
+                                    height = img_fn["height"]
+                                    onehot = [x[2:] == [width, height] for x in bbs]
+                                    if sum(onehot) == 1:
+                                        idx = onehot.index(True)
+                                        skeletons.append(poses[idx])
+                                if height > max_height:
+                                    max_height = height
+                        if len(skeletons) == self.n_input_frames:  # Add to dataset if complete
+                            # Normalize to the center of the body (hip) & largest height in sequence
+                            skeletons = [x - x[8, :] for x in skeletons]
+                            skeletons = [x / max_height for x in skeletons]
+                            self._labels.append(activity)
+                            self._skeletons.append(np.stack(skeletons)[:, self._indices, :])
+
+
+def ddnet_data_main():
+    phase = 'test'
+    dataset = DDNetDataset(TRAINING_DATA_DIR, phase)
+    data_loader = DataLoader(dataset, batch_size=1, shuffle=True, num_workers=0)
+    for i_batch, sample_batched in enumerate(data_loader):
+        [print(x.shape) for x in sample_batched]
+        break
+
 
 if __name__ == '__main__':
-    PHASE = 'train'
-    for train_file in os.listdir(TRAINING_DATA_DIR):
-        with open(os.path.join(TRAINING_DATA_DIR, train_file)) as train_json:
-            train_data = json.loads(train_json.read())
-            dataset = DDNetDataset(train_data, PHASE, 1)
-            data_loader = DataLoader(dataset, batch_size=1, shuffle=True, num_workers=0)
-            for i_batch, sample_batched in enumerate(data_loader):
-                [print(x.shape) for x in sample_batched]
-                break
+    ddnet_data_main()
