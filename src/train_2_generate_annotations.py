@@ -15,6 +15,8 @@ from utils.pose_model import PoseModel
 DATASETS_DIR = '../datasets/'
 TRAINING_DATA_DIR = os.path.join(DATASETS_DIR, "training-data")
 
+MAX_ZERO_POSES = 6
+
 model = PoseModel()
 
 clip_annotations_template = {
@@ -74,6 +76,17 @@ def generate_annotations(video_clip):
     annotation_id = 0
     for frame_id, frame in iter_frames(video_capture):
         image, keypoints = model.estimate_pose(frame)
+        if args.drop_dirty_pose:
+            i = 0
+            n = len(keypoints)
+            while i < n:
+                if keypoints[i]["pose"].count([0,0]) > MAX_ZERO_POSES or keypoints[i]["pose"].count([0.0, 0.0]) > MAX_ZERO_POSES:
+                    keypoints.pop(i)
+                    n -= 1
+                else:
+                    i += 1
+        if not keypoints:
+            continue
         if args.skip_dirty and len(keypoints) > 1:
             return
         video_clip_annotations["images"].append({
@@ -109,6 +122,7 @@ parser = argparse.ArgumentParser(description=DESCRIPTION)
 parser.add_argument('video_dir', type=str)
 parser.add_argument('csv_path', type=str)
 parser.add_argument('--skip_dirty', help='skip video clips with more than a single person in it.', action='store_true')
+parser.add_argument('--drop_dirty_pose', help='drop poses with multipe zero Values in poses', action='store_true')
 args = parser.parse_args()
 
 if __name__ == '__main__':
