@@ -170,22 +170,39 @@ def train(model, gpu, model_dir, data_loaders, criterion, optimizer, num_epochs=
 
 
 if __name__ == '__main__':
-    for train_file in os.listdir(TRAINING_DATA_DIR):
-        with open(os.path.join(cfg.train_dir, train_file)) as train_json:
-            train_data = json.loads(train_json.read())
-        train_set = DDNetDataset(train_data, 'train', cfg.n_input_frames)
-        data_loaders = dict()
-        data_loaders['train'] = DataLoader(train_set, cfg.batch_size, shuffle=True, num_workers=0)
-        # Model
-        ddnet_cfg = DDNetConfig(len(CLASS_NAMES), cfg.n_input_frames, train_set.n_joints, train_set.d_joints)
-        model = DDNet(ddnet_cfg)
-        model.to(f'cuda:{cfg.gpu}')
-        # Loss
-        criterion = nn.CrossEntropyLoss()
-        # Optimizer
-        optimizer = optim.Adam(model.parameters())
-        # LR scheduler
-        lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=10)
-        # Train
-        model.eval()
-        train(model, cfg.gpu, cfg.model_dir, data_loaders, criterion, optimizer, cfg.n_epochs, lr_scheduler, cfg.extra_log_dir)
+    #for train_file in os.listdir(TRAINING_DATA_DIR):
+    #    with open(os.path.join(cfg.train_dir, train_file)) as train_json:
+    #        train_data = json.loads(train_json.read())
+    #    train_set = DDNetDataset(train_data, 'train', cfg.n_input_frames)
+    #    data_loaders = dict()
+    #    data_loaders['train'] = DataLoader(train_set, cfg.batch_size, shuffle=True, num_workers=0)
+    #    print(len(data_loaders['train']))
+    #    # Model
+    #    ddnet_cfg = DDNetConfig(len(CLASS_NAMES), cfg.n_input_frames, train_set.n_joints, train_set.d_joints)
+    #    model = DDNet(ddnet_cfg)
+    #    model.to(f'cuda:{cfg.gpu}')
+    #    # Loss
+    #    criterion = nn.CrossEntropyLoss()
+    #    # Optimizer
+    #    optimizer = optim.Adam(model.parameters())
+    #    # LR scheduler
+    #    lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=10)
+    #    # Train
+    #    train(model, cfg.gpu, cfg.model_dir, data_loaders, criterion, optimizer, cfg.n_epochs, lr_scheduler, cfg.extra_log_dir)
+    train_set = DDNetDataset(cfg.train_dir, 'train', cfg.n_input_frames)
+    data_loaders = dict()
+    data_loaders['train'] = DataLoader(train_set, cfg.batch_size, shuffle=True, num_workers=0)
+    # Model
+
+    ddnet_cfg = DDNetConfig(len(CLASS_NAMES), cfg.n_input_frames, train_set.n_joints, train_set.d_joints)
+
+    model = DDNet(ddnet_cfg)
+    model.to(f'cuda:{cfg.gpu}')
+    # Loss
+    criterion = nn.CrossEntropyLoss()
+    # Optimizer
+    optimizer = optim.Adam(model.parameters())
+    # LR scheduler
+    lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=10)
+    # Train
+    train(model, cfg.gpu, cfg.model_dir, data_loaders, criterion, optimizer, cfg.n_epochs, lr_scheduler, cfg.extra_log_dir)
