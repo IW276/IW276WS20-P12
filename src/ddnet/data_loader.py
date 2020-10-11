@@ -33,7 +33,7 @@ class DDNetDataset(Dataset):
         self.n_input_frames = n_input_frames
         self._skeletons = list()  # List of n_input_frames x P x 2
         self._labels = list()
-        self._indices = range(12)  # BODY_25 w/0 face & feet
+        self._indices = range(18)  # BODY_25 w/0 face & feet
         # Load csv
         self.prepare_dataset()
         self._jcd, self._pose, self._y = DDNetDataset.data_generator(self._skeletons, self._labels)
@@ -109,7 +109,7 @@ class DDNetDataset(Dataset):
         for pose in annotations["keypoints"]:
             for p in pose["pose"]:
                 if p[0] > 0.0 and p[1] > 0.0:
-                    kp = np.asarray(pose["pose"]).reshape(-1, 3)[:, 0:2]  # P x 2
+                    kp = np.asarray(pose["pose"])#.reshape(-1, 3)[:, 0:2]  # P x 2
                     poses.append(kp)
                     break
         return poses
@@ -171,6 +171,7 @@ class DDNetDataset(Dataset):
                             skeletons = [x / max_height for x in skeletons]
                             self._labels.append(activity)
                             self._skeletons.append(np.stack(skeletons)[:, self._indices, :])
+
 
 
 def ddnet_data_main():
