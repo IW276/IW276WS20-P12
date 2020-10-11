@@ -53,7 +53,7 @@ clip_annotations_template = {
 
 category_ids = { c['name']:c['id'] for c in clip_annotations_template["categories"] }
 
-def generate_annotations(video_clip):
+def generate_annotations(video_clip, training_data_dir):
     '''
     Generates ddnet training data for the given video clip
     by returning a json in COCO format containing annotations
@@ -94,21 +94,14 @@ def generate_annotations(video_clip):
             "width": image.shape[0],
             "height": image.shape[1]
         })
-#        print(type(keypoints), keypoints)
-#        for k in keypoints:
-#            annotation_id += 1
-#            video_clip_annotations["annotations"].append({
-#                "id": annotation_id,
-#                "image_id": frame_id,
-#                "category_id": category_ids[activity],
-#                "keypoints": k
-#            })
         video_clip_annotations["annotations"].append({
             "image_id": frame_id,
             "category_id": category_ids[activity],
             "keypoints": keypoints
         })
-    annotations_path = os.path.join(TRAINING_DATA_DIR, "{}_clip_{}_{}.json".format(video_hash, frame_start, frame_end))
+    annotations_path = os.path.join(training_data_dir, "{}_clip_{}_{}.json".format(video_hash, frame_start, frame_end))
+    if len(video_clip_annotations["annotations"]) < 1:
+        return
     with open(annotations_path, 'w') as video_clip_json:
         json.dump(video_clip_annotations, video_clip_json, sort_keys=True, indent=2)
     cv2.destroyAllWindows()
@@ -123,6 +116,7 @@ parser.add_argument('video_dir', type=str)
 parser.add_argument('csv_path', type=str)
 parser.add_argument('--skip_dirty', help='skip video clips with more than a single person in it.', action='store_true')
 parser.add_argument('--drop_dirty_pose', help='drop poses with multipe zero Values in poses', action='store_true')
+parser.add_argument('--training_data_dir', type=str, default=TRAINING_DATA_DIR)
 args = parser.parse_args()
 
 if __name__ == '__main__':
@@ -130,10 +124,10 @@ if __name__ == '__main__':
     {}
     """.format(DESCRIPTION)
     # create sub folder in datasets
-    os.makedirs(TRAINING_DATA_DIR, exist_ok=True)
+    os.makedirs(args.training_data_dir, exist_ok=True)
     # open csv containing video clip locations and category information
     with open(args.csv_path) as csv_file:
         video_clip_data = csv.reader(csv_file, delimiter=';')
         # generate annotations for each video clip
         for clip in video_clip_data:
-            generate_annotations(clip)
+            generate_annotations(clip, args.training_data_dir)
