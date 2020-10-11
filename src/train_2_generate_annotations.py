@@ -91,8 +91,8 @@ def generate_annotations(video_clip, training_data_dir):
             return
         video_clip_annotations["images"].append({
             "id": frame_id,
-            "width": image.shape[0],
-            "height": image.shape[1]
+            "width": frame.shape[1],
+            "height": frame.shape[0]
         })
         video_clip_annotations["annotations"].append({
             "image_id": frame_id,
