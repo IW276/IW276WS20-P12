@@ -8,7 +8,7 @@ This Project aims at realizing real time 2D Pose Based Action Recognition for th
 * bicycling
 
 <p align="center">
-  ![walking the dog](/walking-the-dog.png)
+  <img src="/walking-the-dog.png" />
 </p>
 
  We wanted to achieve this by completing the following tasks:
