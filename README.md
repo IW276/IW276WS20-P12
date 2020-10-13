@@ -12,7 +12,7 @@ This Project aims at realizing real time 2D Pose Based Action Recognition for th
 </p>
 
  We wanted to achieve this by completing the following tasks:
-- [x] using docker for building an automated training pipeline for ddnet Based on the previous work done by [Group 1](https://github.com/IW276/IW276SS20-P1) and the open-source [MPII](http://human-pose.mpi-inf.mpg.de/) dataset.
+- [x] using docker for building an automated training pipeline based on the previous work done by [Group 1](https://github.com/IW276/IW276SS20-P1) and the open-source [MPII](http://human-pose.mpi-inf.mpg.de/) dataset.
 - [x] using docker for building an automated real time activity recognition video stream pipeline.
 - [x] using [trt_pose](https://github.com/NVIDIA-AI-IOT/trt_pose) for extracting the skeletons.
 - [ ] using [ddnet](https://github.com/fandulu/DD-Net) for recognizing the activities.
@@ -37,11 +37,11 @@ This Project aims at realizing real time 2D Pose Based Action Recognition for th
 
 The demo aka video stream pipeline as well as the training pipeline have both been containerized with docker to provide a clean runtime environment.
 
-**Run the docker-build.sh script to build the docker image.**  
+**Run <a href="/docker-build.sh">docker-build.sh</a> to build the docker image.**  
 
 ### ... the demo
 
-**Run the docker-run.sh script to execute the video stream pipeline.**  
+**Run <a href="/docker-run.sh">docker-run.sh</a> to execute the video stream pipeline.**  
 
 _First argument_ - path to a video directory on the host.  
 _Second argument_ - filename of the video to be processed as found in the path specified by the first argument.  
@@ -59,7 +59,7 @@ keep it open for the user to actually start the training on his own machine or G
 the training-data has to be uploaded to Google Drive in that case and train_3_train_model.py has to be executed directly there).
 
 
-**1. Run the docker-prepare-training.sh to prepare the training data.**  
+**1. Run <a href="/docker-prepare-training.sh">docker-prepare-training.sh</a> to prepare the training data.**  
 
 _First argument_ - path to a video directory on the host where the sample videos will be downloaded to.  
 _Second argument_ - path to the training-data directory where the sample data will be placed in.  
@@ -70,7 +70,7 @@ Example
 ./docker-prepare-training.sh /path/to/videos /path/to/training-data
 ```
 
-**2. Run docker-run-training.sh to start the training.**  
+**2. Run <a href="/docker-run-training.sh">docker-run-training.sh</a> to start the training.**  
 
 _First argument_ - path to the training-data directory where the sample data can be found. 
 _Second argument_ - path to the model directory the resulting pre-trained model .pth will be placed in.  
