@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y libopencv-python && apt-get install -y 
           python3-dev \
           python3-tk \
           python3-matplotlib \
+          python3-scipy \
           build-essential \
           zlib1g-dev \
           zip \

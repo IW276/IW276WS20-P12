@@ -9,6 +9,7 @@ import cv2
 import torchvision.transforms as transforms
 import PIL.Image
 
+from utils.frame_iterator import iter_frames
 from os import path
 from trt_pose.draw_objects import DrawObjects
 from trt_pose.parse_objects import ParseObjects
@@ -23,9 +24,18 @@ MODEL_RESNET18_OPTIMIZED = 'resnet18_baseline_att_224x224_A_epoch_249_trt.pth'
 WIDTH = 224
 HEIGHT = 224
 
+CLASS_NAMES = {
+        1: "walking, general",
+        2: "walking the dog",
+        3: "running",
+        4: "jogging",
+        5: "bicycling, general"
+}
+
 parser = argparse.ArgumentParser(description='TensorRT pose estimation run')
 parser.add_argument('--video_path', type=str)
 parser.add_argument('--video_filename', type=str)
+parser.add_argument('--video_json', type=str)
 args = parser.parse_args()
 
 # load json containing human pose tasks
@@ -62,6 +72,8 @@ mean = torch.Tensor([0.485, 0.456, 0.406]).cuda()
 std = torch.Tensor([0.229, 0.224, 0.225]).cuda()
 device = torch.device('cuda')
 
+
+
 # transform IMG to tensor for NN
 def preprocess(image):
     global device
@@ -73,13 +85,27 @@ def preprocess(image):
     return image[None, ...]
 
 # execute the NN
-def execute(image, frame, t):
+def execute(image, frame, t, annotation, frame_info):
     data = preprocess(image)
     cmap, paf = model_trt(data)
     cmap, paf = cmap.detach().cpu(), paf.detach().cpu()
     counts, objects, peaks = parse_objects(cmap, paf)
 
-    #TODO draw activity detection frame on the image with DDNet
+    # TODO draw activity detection onto the frame with DDNet actually
+    #
+    # training data is available. At the time of writing unfortunately
+    # there is a problem with ddnet which could not be resolved in the
+    # scope of this labour. Therefore, we show at least a preview of the
+    # expected output based on our training data.
+
+    for kp in annotation["keypoints"]:
+        pose = [y for y in kp["pose"] if int(y[0]) != 0 and int(y[1]) !=0]
+        min_y = int(min(pose, key = lambda t: t[1])[1]/5/HEIGHT*frame_info["height"]) - 10 
+        max_y = int(max(pose, key = lambda t: t[1])[1]/5/HEIGHT*frame_info["height"]) + 10
+        min_x = int(min(pose, key = lambda t: t[0])[0]/5/WIDTH*frame_info["width"])
+        max_x = int(max(pose, key = lambda t: t[0])[0]/5/WIDTH*frame_info["width"])
+        cv2.rectangle(frame, (min_x, min_y), (max_x, max_y), (255, 0, 0), 2)
+        cv2.putText(frame, "%s" % (CLASS_NAMES[annotation["category_id"]]), (min_x, min_y),  cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
     fps = 1.0 / (time.time() - t)
     draw_objects(frame, counts, objects, peaks)
@@ -100,15 +126,7 @@ def video_capture_destroy():
     out_video.release()
     video_capture.release()
 
-# iterate frames of a video
-def iter_frames(video_capture):
-    while (video_capture.isOpened()):
-        ret, frame = video_capture.read()
-        if not ret:
-            break
-        if cv2.waitKey(25) & 0xFF == ord('q'):
-            break
-        yield frame
+
 
 if __name__ == '__main__':
     '''
@@ -127,9 +145,16 @@ if __name__ == '__main__':
     print("Processing frames ...")
     print("Hint: This may take a while depending on the size of the video.") 
 
-    for frame in iter_frames(video_capture):
+    with open(path.join(DATASETS_DIR, "training-data", args.video_json)) as json_file:
+        json_data = json.loads(json_file.read())
+        annotations = json_data["annotations"]
+        images_info = json_data["images"]
+
+    for frame_id, frame in iter_frames(video_capture):
         image = cv2.resize(frame, dsize=(WIDTH, HEIGHT), interpolation=cv2.INTER_AREA)
-        fps = execute(image, frame, time.time())
+        image_info = next(i for i in images_info if i["id"] == frame_id)
+        annotation = next(annotation for annotation in annotations if annotation["image_id"] == frame_id)
+        fps = execute(image, frame, time.time(), annotation, image_info)
         cv2.putText(frame, "FPS: %f" % (fps), (20, 30),  cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 3)
         out_video.write(frame)
 
