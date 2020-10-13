@@ -11,19 +11,18 @@ This Project aims at realizing real time 2D Pose Based Action Recognition for th
   <img src="/walking-the-dog.png" />
 </p>
 
- We wanted to achieve this by completing the following tasks:
-- [x] using docker for building an automated training pipeline based on the previous work done by [Group 1](https://github.com/IW276/IW276SS20-P1) and the open-source [MPII](http://human-pose.mpi-inf.mpg.de/) dataset.
-- [x] using docker for building an automated real time activity recognition video stream pipeline.
-- [x] using [trt_pose](https://github.com/NVIDIA-AI-IOT/trt_pose) for extracting the skeletons.
-- [ ] using [ddnet](https://github.com/fandulu/DD-Net) for recognizing the activities.
+- [x] use docker for building an automated training pipeline based on the previous work done by [Group 1](https://github.com/IW276/IW276SS20-P1) and the open-source [MPII](http://human-pose.mpi-inf.mpg.de/) dataset.
+- [x] use docker for building an automated real time activity recognition video stream pipeline.
+- [x] use [trt_pose](https://github.com/NVIDIA-AI-IOT/trt_pose) for extracting the skeletons.
+- [ ] use [ddnet](https://github.com/fandulu/DD-Net) for recognizing the activities.
 
 > This work was done by ZhengChen Guan, Karsten Rudolf and Tobias Heilig during the IW276 Autonome Systeme Labor at the Karlsruhe University of Applied Sciences (Hochschule Karlruhe - Technik und Wirtschaft) in WS 2020 / 2021. 
 
 ## Table of Contents
 
-* [Prerequisites](#prerequisites)
+* [Requirements](#requirements)
 * [Running](#running)
-* [Acknowledgments](#acknowledgments)
+* [TODO](#todo)
 
 ## Requirements
 * Python 3.6 (or above)
@@ -81,7 +80,7 @@ Example
 ./docker-run-training.sh /path/to/training-data /path/to/model
 ```
 
-## TODO's
+## TODO
 
 Unfortunately, there is a yet unresolved bug when starting the training. Therefore, we were not able to obtain a pre-trained model and actually use ddnet for activity recognition. In the current state of the project the recognized activities drawn onto the frames come from the pre-processed training data samples. To make the project work lively as intended the following problems have to be solved first:
 - [ ] Fix segmentation fault when starting the training to obtain a model. See the internal Wiki, contact `mickael.cormier AT iosb.fraunhofer.de` for more information.
