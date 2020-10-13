@@ -51,7 +51,6 @@ def train(model, gpu, model_dir, data_loaders, criterion, optimizer, num_epochs=
     """
     tmp_name = time.strftime("%Y%m%d_%H%M%S", time.gmtime())
     logging_fn = f'{tmp_name}_{TRAINING_IDENTIFIER}.log'
-    #model_dir = f'{model_dir}/{tmp_name}_{TRAINING_IDENTIFIER}'
     model_dir = os.path.join(cfg.model_dir, "{}_{}".format(tmp_name, TRAINING_IDENTIFIER))
     if not os.path.isdir(model_dir):
         os.mkdir(model_dir)
