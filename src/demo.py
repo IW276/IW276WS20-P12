@@ -91,15 +91,19 @@ def execute(image, frame, t, annotation, frame_info):
     cmap, paf = cmap.detach().cpu(), paf.detach().cpu()
     counts, objects, peaks = parse_objects(cmap, paf)
 
-    #TODO draw activity detection frame on the image with DDNet
-    # training data is available. At the time of writing unfortunately there is a problem with ddnet which could not be resolved in the scope of this labour. Therefore we show at least a preview of the expected output based on our traing data. For more detailed information see the documentation in the WIKI.
+    # TODO draw activity detection onto the frame with DDNet actually
+    #
+    # training data is available. At the time of writing unfortunately
+    # there is a problem with ddnet which could not be resolved in the
+    # scope of this labour. Therefore, we show at least a preview of the
+    # expected output based on our training data.
+
     for kp in annotation["keypoints"]:
         pose = [y for y in kp["pose"] if int(y[0]) != 0 and int(y[1]) !=0]
         min_y = int(min(pose, key = lambda t: t[1])[1]/5/HEIGHT*frame_info["height"]) - 10 
         max_y = int(max(pose, key = lambda t: t[1])[1]/5/HEIGHT*frame_info["height"]) + 10
         min_x = int(min(pose, key = lambda t: t[0])[0]/5/WIDTH*frame_info["width"])
         max_x = int(max(pose, key = lambda t: t[0])[0]/5/WIDTH*frame_info["width"])
-#        print(min_y, max_y, min_x, max_x)
         cv2.rectangle(frame, (min_x, min_y), (max_x, max_y), (255, 0, 0), 2)
         cv2.putText(frame, "%s" % (CLASS_NAMES[annotation["category_id"]]), (min_x, min_y),  cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
