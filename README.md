@@ -8,14 +8,14 @@ This Project aims at realizing real time 2D Pose Based Action Recognition for th
 * bicycling
 
 <p align="center">
-  ![walking the dog](https://i.ibb.co/KqFm48K/walking-the-dog.png)
+  ![walking the dog](/walking-the-dog.png)
 </p>
 
  We wanted to achieve this by completing the following tasks:
 - [x] using docker for building an automated training pipeline for ddnet Based on the previous work done by [Group 1](https://github.com/IW276/IW276SS20-P1) and the open-source [MPII](http://human-pose.mpi-inf.mpg.de/) dataset.
 - [x] using docker for building an automated real time activity recognition video stream pipeline.
 - [x] using [trt_pose](https://github.com/NVIDIA-AI-IOT/trt_pose) for extracting the skeletons.
-- [ ] using ddnet for recognizing the activities.
+- [ ] using [ddnet](https://github.com/fandulu/DD-Net) for recognizing the activities.
 
 > This work was done by ZhengChen Guan, Karsten Rudolf and Tobias Heilig during the IW276 Autonome Systeme Labor at the Karlsruhe University of Applied Sciences (Hochschule Karlruhe - Technik und Wirtschaft) in WS 2020 / 2021. 
 
@@ -34,6 +34,8 @@ This Project aims at realizing real time 2D Pose Based Action Recognition for th
 * Jetson Nano
 
 ## Running ...
+
+The demo aka video stream pipeline as well as the training pipeline have both been containerized with docker to provide a clean runtime environment.
 
 **Run the docker-build.sh script to build the docker image.**  
 
@@ -90,6 +92,7 @@ Unfortunately, there is a yet unresolved bug when starting the training. Therefo
 This repo is based on
   - [IWI276/IW276SS20P1](https://github.com/IW276/IW276SS20-P1)
   - [TRT_Pose](https://github.com/NVIDIA-AI-IOT/trt_pose)
+  - [DD-Net](https://github.com/fandulu/DD-Net)
 
 Thanks to the original authors for their work!
 
