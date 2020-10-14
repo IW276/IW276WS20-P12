@@ -13,7 +13,8 @@ RUN apt-get update && apt-get install -y libopencv-python && apt-get install -y 
           build-essential \
           zlib1g-dev \
           zip \
-          libjpeg8-dev && rm -rf /var/lib/apt/lists/*
+          ffmpeg \
+          libjpeg8-dev && rm -rf /var/lib/apt/lists/* 
 RUN pip3 install -U pip setuptools wheel
 RUN pip3 install -r requirements.txt
 RUN git clone https://github.com/NVIDIA-AI-IOT/trt_pose
