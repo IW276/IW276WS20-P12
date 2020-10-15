@@ -71,7 +71,7 @@ Example
 
 **2. Run <a href="/docker-run-training.sh">docker-run-training.sh</a> to start the training.**  
 
-_First argument_ - path to the training-data directory where the sample data can be found. 
+_First argument_ - path to the training-data directory where the sample data can be found.  
 _Second argument_ - path to the model directory the resulting pre-trained model .pth will be placed in.  
 _Returns_ - the pre-trained model.  
 
